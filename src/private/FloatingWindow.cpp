@@ -158,6 +158,50 @@ static FloatingWindowFlags flagsForFloatingWindow(FloatingWindowFlags requestedF
     return flags;
 }
 
+//added by xlm, add a param to pass the titlebar creator
+FloatingWindow::FloatingWindow(QRect suggestedGeometry, MainWindowBase *parent,
+                               FloatingWindowFlags requestedFlags, TitleBarCreator creator)
+    : QWidgetAdapter(actualParent(parent), windowFlagsToUse(requestedFlags))
+    , Draggable(this, KDDockWidgets::usesNativeDraggingAndResizing()) // FloatingWindow is only draggable when using a native title bar. Otherwise the KDDockWidgets::TitleBar is the draggable
+    , m_flags(flagsForFloatingWindow(requestedFlags))
+    , m_dropArea(new DropArea(this))
+    , m_titleBar(creator==nullptr?Config::self().frameworkWidgetFactory()->createTitleBar(this):creator(this))
+{
+    if (!suggestedGeometry.isNull())
+        setGeometry(suggestedGeometry);
+
+    if (kddwUsesQtWidgets()) {
+        // For QtQuick we do it a bit later, once we have the QQuickWindow
+#ifdef Q_OS_WIN
+        create();
+#ifdef KDDOCKWIDGETS_QTWIDGETS
+        m_nchittestFilter = new NCHITTESTEventFilter(this);
+        qApp->installNativeEventFilter(m_nchittestFilter);
+#endif
+        WidgetResizeHandler::setupWindow(windowHandle());
+#endif
+    }
+
+    DockRegistry::self()->registerFloatingWindow(this);
+
+    if (m_flags & FloatingWindowFlag::KeepAboveIfNotUtilityWindow)
+        setWindowFlag(Qt::WindowStaysOnTopHint, true);
+
+    if (kddwUsesQtWidgets()) {
+        // QtQuick will do it a bit later, once it has a QWindow
+        maybeCreateResizeHandler();
+    }
+
+    updateTitleBarVisibility();
+    connect(m_dropArea, &LayoutWidget::visibleWidgetCountChanged, this,
+            &FloatingWindow::onFrameCountChanged);
+    connect(m_dropArea, &LayoutWidget::visibleWidgetCountChanged, this,
+            &FloatingWindow::numFramesChanged);
+    connect(m_dropArea, &LayoutWidget::visibleWidgetCountChanged, this,
+            &FloatingWindow::onVisibleFrameCountChanged);
+    m_layoutDestroyedConnection = connect(m_dropArea, &QObject::destroyed, this, &FloatingWindow::scheduleDeleteLater);
+}
+#if 0
 FloatingWindow::FloatingWindow(QRect suggestedGeometry, MainWindowBase *parent,
                                FloatingWindowFlags requestedFlags)
     : QWidgetAdapter(actualParent(parent), windowFlagsToUse(requestedFlags))
@@ -200,7 +244,7 @@ FloatingWindow::FloatingWindow(QRect suggestedGeometry, MainWindowBase *parent,
             &FloatingWindow::onVisibleFrameCountChanged);
     m_layoutDestroyedConnection = connect(m_dropArea, &QObject::destroyed, this, &FloatingWindow::scheduleDeleteLater);
 }
-
+#endif
 static FloatingWindowFlags floatingWindowFlagsForFrame(Frame *frame)
 {
     if (!frame)

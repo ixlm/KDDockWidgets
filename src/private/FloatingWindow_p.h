@@ -32,7 +32,7 @@ class DropArea;
 class Frame;
 class MultiSplitter;
 class LayoutWidget;
-
+// 2023/7/23 added by xlm, to pass a titlebar creator by param
 class DOCKS_EXPORT FloatingWindow
     : public QWidgetAdapter,
       public Draggable
@@ -41,8 +41,14 @@ class DOCKS_EXPORT FloatingWindow
     Q_PROPERTY(KDDockWidgets::TitleBar *titleBar READ titleBar CONSTANT)
     Q_PROPERTY(KDDockWidgets::DropArea *dropArea READ dropArea CONSTANT)
 public:
+#if 0
     explicit FloatingWindow(QRect suggestedGeometry, MainWindowBase *parent = nullptr,
                             FloatingWindowFlags requestedFlags = FloatingWindowFlag::FromGlobalConfig);
+#endif
+    //added by xlm, add a param to pass the titlebar creator
+    using TitleBarCreator = std::function<TitleBar*(FloatingWindow*) >;
+    explicit FloatingWindow(QRect suggestedGeometry, MainWindowBase *parent = nullptr,
+                            FloatingWindowFlags requestedFlags = FloatingWindowFlag::FromGlobalConfig, TitleBarCreator creator=nullptr);
     explicit FloatingWindow(Frame *frame, QRect suggestedGeometry, MainWindowBase *parent = nullptr);
     ~FloatingWindow() override;
 
@@ -253,7 +259,8 @@ protected:
 
     const FloatingWindowFlags m_flags;
     QPointer<DropArea> m_dropArea;
-    TitleBar *const m_titleBar;
+    // TitleBar *const m_titleBar;
+    TitleBar * m_titleBar; //modified by xlm, change it to nonconstant
     Qt::WindowState m_lastWindowManagerState = Qt::WindowNoState;
 
 private:

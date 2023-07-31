@@ -24,8 +24,13 @@ class DOCKS_EXPORT FloatingWindowWidget : public FloatingWindow
 {
     Q_OBJECT
 public:
+#if 0
     explicit FloatingWindowWidget(QRect suggestedGeometry, MainWindowBase *parent = nullptr,
                                   FloatingWindowFlags flags = FloatingWindowFlag::FromGlobalConfig);
+#endif
+    //modified by xlm, add a titlebar creator passed by param
+    explicit FloatingWindowWidget(QRect suggestedGeometry, MainWindowBase *parent = nullptr,
+                                  FloatingWindowFlags flags = FloatingWindowFlag::FromGlobalConfig, FloatingWindow::TitleBarCreator creator=nullptr);
     explicit FloatingWindowWidget(Frame *frame, QRect suggestedGeometry, MainWindowBase *parent = nullptr);
 
 protected:

@@ -24,10 +24,20 @@
 #include <QWindowStateChangeEvent>
 
 using namespace KDDockWidgets;
-
+#if 0
 FloatingWindowWidget::FloatingWindowWidget(QRect suggestedGeometry, MainWindowBase *parent,
                                            FloatingWindowFlags flags)
     : FloatingWindow(suggestedGeometry, parent, flags)
+    , m_vlayout(new QVBoxLayout(this))
+{
+    init();
+}
+#endif
+
+//modified by xlm, add a titlebar creator passed by param
+FloatingWindowWidget::FloatingWindowWidget(QRect suggestedGeometry, MainWindowBase *parent,
+                                           FloatingWindowFlags flags, FloatingWindow::TitleBarCreator creator)
+    : FloatingWindow(suggestedGeometry, parent, flags, creator)
     , m_vlayout(new QVBoxLayout(this))
 {
     init();
